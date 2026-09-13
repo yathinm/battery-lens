@@ -134,6 +134,7 @@ final class BatteryAppModel: ObservableObject {
 
             var adapters: [any DiscoveryAdapter] = [MacPowerAdapter()]
             if preferences.bluetoothAccessories { adapters.append(IORegistryAccessoryAdapter()) }
+            if preferences.genericBLE { adapters.append(GenericBLEBatteryAdapter()) }
             if preferences.pairedDevices,
                let helperURL = Bundle.main.url(forAuxiliaryExecutable: "PairedDeviceHelper") {
                 adapters.append(PairedDeviceAdapter(executableURL: helperURL))

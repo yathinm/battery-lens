@@ -54,6 +54,7 @@ struct SettingsView: View {
     private var discovery: some View {
         Form {
             Toggle("Apple and Bluetooth accessories", isOn: $preferences.bluetoothAccessories)
+            Toggle("Generic Bluetooth Battery Service", isOn: $preferences.genericBLE)
             Toggle("Paired iPhone and iPad", isOn: $preferences.pairedDevices)
             Text("Source changes apply after BatteryLens is relaunched.")
                 .font(.caption)

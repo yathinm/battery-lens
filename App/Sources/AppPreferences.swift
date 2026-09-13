@@ -8,6 +8,7 @@ final class AppPreferences: ObservableObject {
         static let refreshInterval = "refreshInterval"
         static let showPercentage = "showPercentage"
         static let bluetoothAccessories = "bluetoothAccessories"
+        static let genericBLE = "genericBLE"
         static let pairedDevices = "pairedDevices"
         static let lowAlerts = "lowAlerts"
         static let lowThreshold = "lowThreshold"
@@ -23,6 +24,7 @@ final class AppPreferences: ObservableObject {
     @Published var refreshInterval: TimeInterval { didSet { defaults.set(refreshInterval, forKey: Key.refreshInterval) } }
     @Published var showPercentage: Bool { didSet { defaults.set(showPercentage, forKey: Key.showPercentage) } }
     @Published var bluetoothAccessories: Bool { didSet { defaults.set(bluetoothAccessories, forKey: Key.bluetoothAccessories) } }
+    @Published var genericBLE: Bool { didSet { defaults.set(genericBLE, forKey: Key.genericBLE) } }
     @Published var pairedDevices: Bool { didSet { defaults.set(pairedDevices, forKey: Key.pairedDevices) } }
     @Published var lowAlerts: Bool { didSet { defaults.set(lowAlerts, forKey: Key.lowAlerts) } }
     @Published var lowThreshold: Int { didSet { defaults.set(lowThreshold, forKey: Key.lowThreshold) } }
@@ -45,6 +47,7 @@ final class AppPreferences: ObservableObject {
             Key.refreshInterval: 60.0,
             Key.showPercentage: true,
             Key.bluetoothAccessories: true,
+            Key.genericBLE: false,
             Key.pairedDevices: true,
             Key.lowAlerts: true,
             Key.lowThreshold: 10,
@@ -57,6 +60,7 @@ final class AppPreferences: ObservableObject {
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
         showPercentage = defaults.bool(forKey: Key.showPercentage)
         bluetoothAccessories = defaults.bool(forKey: Key.bluetoothAccessories)
+        genericBLE = defaults.bool(forKey: Key.genericBLE)
         pairedDevices = defaults.bool(forKey: Key.pairedDevices)
         lowAlerts = defaults.bool(forKey: Key.lowAlerts)
         lowThreshold = defaults.integer(forKey: Key.lowThreshold)
