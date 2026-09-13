@@ -26,6 +26,7 @@ final class BatteryAppModel: ObservableObject {
     private var scheduler: ScanScheduler?
     private var alertEngine: AlertEngine?
     private var snapshotStore: SnapshotStore?
+    private var diagnosticStore: DiagnosticStore?
     private let originMacID: UUID
     private let notificationController = NotificationController()
     private let loginItemController = LoginItemController()
@@ -87,6 +88,7 @@ final class BatteryAppModel: ObservableObject {
         guard !isRefreshing else { return }
         isRefreshing = true
         errorMessage = nil
+        let startedAt = Date()
         Task {
             guard let scheduler, let resolver else {
                 isRefreshing = false
@@ -96,6 +98,25 @@ final class BatteryAppModel: ObservableObject {
             let resolved = await resolver.reconcile(observations)
             let health = await scheduler.health()
             await publish(devices: resolved, health: health)
+            let duration = Int(Date().timeIntervalSince(startedAt) * 1_000)
+            try? await diagnosticStore?.record(
+                DiagnosticEvent(
+                    logClass: .operational,
+                    code: "refresh_\(reason.rawValue)",
+                    summary: "Completed \(reason.rawValue) refresh across \(health.count) sources.",
+                    durationMilliseconds: duration
+                )
+            )
+            for item in health where item.lastErrorCode != nil {
+                try? await diagnosticStore?.record(
+                    DiagnosticEvent(
+                        logClass: .error,
+                        adapterID: item.adapterID,
+                        code: item.lastErrorCode ?? "adapter_error",
+                        summary: item.lastErrorDescription ?? "The source reported an error."
+                    )
+                )
+            }
             isRefreshing = false
         }
     }
@@ -139,6 +160,38 @@ final class BatteryAppModel: ObservableObject {
                 resolver = DeviceResolver(originMacID: originMacID)
                 devices = []
                 refresh(reason: .manual)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func restoreAllHiddenDevices() {
+        Task {
+            for device in hiddenDevices { await resolver?.setHidden(false, deviceID: device.id) }
+            let resolved = await resolver?.allDevices() ?? []
+            await publish(devices: resolved, health: adapterHealth)
+        }
+    }
+
+    func eraseDiagnostics() {
+        Task {
+            do { try await diagnosticStore?.erase() }
+            catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func exportDiagnostics(to url: URL) {
+        Task {
+            do {
+                let events = try await diagnosticStore?.load() ?? []
+                try DiagnosticExporter.write(
+                    to: url,
+                    preferences: preferences,
+                    health: adapterHealth,
+                    devices: devices,
+                    events: events
+                )
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -210,6 +263,10 @@ final class BatteryAppModel: ObservableObject {
             ) ?? applicationSupport
             self.repository = repository
             snapshotStore = try SnapshotStore(directoryURL: snapshotDirectory)
+            diagnosticStore = try DiagnosticStore(
+                directoryURL: applicationSupport.appendingPathComponent("Diagnostics", isDirectory: true),
+                retention: DiagnosticRetentionPolicy(operationalDays: preferences.diagnosticRetentionDays)
+            )
 
             scheduler = makeScheduler()
             discoverySignature = currentDiscoverySignature
@@ -297,6 +354,12 @@ final class BatteryAppModel: ObservableObject {
     private func preferencesChanged() {
         updateStatusTitle()
         resetRefreshTimer()
+        Task {
+            await diagnosticStore?.updateRetention(
+                DiagnosticRetentionPolicy(operationalDays: preferences.diagnosticRetentionDays)
+            )
+            try? await diagnosticStore?.purge()
+        }
         let signature = currentDiscoverySignature
         guard signature != discoverySignature else { return }
         discoverySignature = signature

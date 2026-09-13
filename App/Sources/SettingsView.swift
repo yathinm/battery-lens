@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @ObservedObject var model: BatteryAppModel
@@ -150,7 +151,12 @@ struct SettingsView: View {
             }
             HStack {
                 Button("Refresh All Sources") { model.refresh(reason: .manual) }
+                Button("Export Redacted Diagnostics…") { exportDiagnostics() }
                 Spacer()
+                if !model.hiddenDevices.isEmpty {
+                    Button("Restore Hidden Devices") { model.restoreAllHiddenDevices() }
+                }
+                Button("Erase Diagnostics") { model.eraseDiagnostics() }
                 Button("Erase Local Device Data") { showEraseConfirmation = true }
             }
         }
@@ -162,6 +168,15 @@ struct SettingsView: View {
                 secondaryButton: .cancel()
             )
         }
+    }
+
+    private func exportDiagnostics() {
+        let panel = NSSavePanel()
+        panel.title = "Export Redacted Diagnostics"
+        panel.nameFieldStringValue = "BatteryLens-Diagnostics.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        model.exportDiagnostics(to: url)
     }
 
     private var privacy: some View {

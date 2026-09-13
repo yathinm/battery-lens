@@ -58,5 +58,10 @@ let package = Package(
             dependencies: ["BatteryPeers", "BatteryDomain"],
             path: "Packages/BatteryCore/Tests/BatteryPeersTests"
         ),
+        .testTarget(
+            name: "BatteryPersistenceTests",
+            dependencies: ["BatteryPersistence", "BatteryDomain"],
+            path: "Packages/BatteryCore/Tests/BatteryPersistenceTests"
+        ),
     ]
 )
