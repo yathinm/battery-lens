@@ -9,3 +9,4 @@ BatteryLens.xcodeproj/project.xcworkspace/xcuserdata/
 *.dSYM.zip
 *.app
 *.pkg
+/IMPLEMENTATION_PLAN.md
