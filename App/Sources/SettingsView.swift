@@ -38,13 +38,18 @@ struct SettingsView: View {
     private var nearcast: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Trusted Mac Sharing").font(.headline)
-            Text("Share redacted battery snapshots with Macs that have the same trust-group code. Messages stay on the local network and are authenticated and encrypted.")
-                .foregroundColor(.secondary)
+            Text(
+                "Share redacted battery snapshots with Macs that have the same trust-group code. Messages stay on the local network and are authenticated and encrypted."
+            )
+            .foregroundColor(.secondary)
             if preferences.localNetworkSharing, let code = model.nearcastCode {
                 Text("Trust-group code").font(.caption).foregroundColor(.secondary)
                 HStack {
                     Text(code).font(.system(.body, design: .monospaced)).lineLimit(1)
-                    Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(code, forType: .string) }
+                    Button("Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(code, forType: .string)
+                    }
                 }
                 if model.trustedPeers.isEmpty {
                     Text("Waiting for trusted Macs on this network…").foregroundColor(.secondary)
@@ -53,7 +58,7 @@ struct SettingsView: View {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(peer.displayName)
-                                Text("Seen \(settingsRelativeDate(peer.lastSeenAt))")
+                                Text("Seen \(relativeDate(peer.lastSeenAt))")
                                     .font(.caption).foregroundColor(.secondary)
                             }
                             Spacer()
@@ -82,13 +87,15 @@ struct SettingsView: View {
             Toggle("Show BatteryLens in the Dock", isOn: $preferences.showDock)
             Toggle("Cycle devices in the Dock", isOn: $preferences.dockCarousel)
                 .disabled(!preferences.showDock)
-            Toggle("Launch at login", isOn: Binding(
-                get: { launchAtLogin },
-                set: { value in
-                    launchAtLogin = value
-                    model.setLaunchAtLogin(value)
-                }
-            ))
+            Toggle(
+                "Launch at login",
+                isOn: Binding(
+                    get: { launchAtLogin },
+                    set: { value in
+                        launchAtLogin = value
+                        model.setLaunchAtLogin(value)
+                    }
+                ))
             Picker("Refresh interval", selection: $preferences.refreshInterval) {
                 Text("30 seconds").tag(30.0)
                 Text("1 minute").tag(60.0)
@@ -166,7 +173,9 @@ struct SettingsView: View {
         .alert(isPresented: $showEraseConfirmation) {
             Alert(
                 title: Text("Erase local device data?"),
-                message: Text("Battery readings, aliases, scanner state, and alert state will be removed. Your display preferences remain."),
+                message: Text(
+                    "Battery readings, aliases, scanner state, and alert state will be removed. Your display preferences remain."
+                ),
                 primaryButton: .destructive(Text("Erase")) { model.eraseDevices() },
                 secondaryButton: .cancel()
             )
@@ -184,7 +193,9 @@ struct SettingsView: View {
 
     private var privacy: some View {
         Form {
-            Text("BatteryLens stores battery readings and preferences on this Mac. It does not require an account or an external service.")
+            Text(
+                "BatteryLens stores battery readings and preferences on this Mac. It does not require an account or an external service."
+            )
             Picker("Diagnostic retention", selection: $preferences.diagnosticRetentionDays) {
                 Text("1 day").tag(1)
                 Text("7 days").tag(7)
@@ -209,10 +220,4 @@ struct SettingsView: View {
         }
         .onAppear { permissionController.refresh() }
     }
-}
-
-private func settingsRelativeDate(_ date: Date) -> String {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .full
-    return formatter.localizedString(for: date, relativeTo: Date())
 }

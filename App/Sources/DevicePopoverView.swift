@@ -258,7 +258,7 @@ private struct DeviceDetailsView: View {
     }
 }
 
-private func relativeDate(_ date: Date) -> String {
+func relativeDate(_ date: Date) -> String {
     let formatter = RelativeDateTimeFormatter()
     formatter.unitsStyle = .full
     return formatter.localizedString(for: date, relativeTo: Date())

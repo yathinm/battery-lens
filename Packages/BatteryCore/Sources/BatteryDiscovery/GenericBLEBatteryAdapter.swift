@@ -1,5 +1,5 @@
-@preconcurrency import CoreBluetooth
 import BatteryDomain
+@preconcurrency import CoreBluetooth
 import Foundation
 
 public final class GenericBLEBatteryAdapter: DiscoveryAdapter, @unchecked Sendable {
@@ -100,7 +100,8 @@ private final class BLEBatteryScanner: NSObject, CBCentralManagerDelegate, CBPer
 
     override init() {
         super.init()
-        central = CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionShowPowerAlertKey: false])
+        central = CBCentralManager(
+            delegate: self, queue: queue, options: [CBCentralManagerOptionShowPowerAlertKey: false])
     }
 
     var permissionState: PermissionState {
@@ -156,8 +157,8 @@ private final class BLEBatteryScanner: NSObject, CBCentralManagerDelegate, CBPer
     func centralManager(
         _ central: CBCentralManager,
         didDiscover peripheral: CBPeripheral,
-        advertisementData: [String: Any],
-        rssi RSSI: NSNumber
+        advertisementData _: [String: Any],
+        rssi _: NSNumber
     ) {
         guard continuation != nil, peripherals[peripheral.identifier] == nil else { return }
         peripherals[peripheral.identifier] = peripheral
@@ -183,7 +184,7 @@ private final class BLEBatteryScanner: NSObject, CBCentralManagerDelegate, CBPer
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard error == nil,
-              let characteristic = service.characteristics?.first(where: { $0.uuid == batteryLevelCharacteristic })
+            let characteristic = service.characteristics?.first(where: { $0.uuid == batteryLevelCharacteristic })
         else {
             central.cancelPeripheralConnection(peripheral)
             return
