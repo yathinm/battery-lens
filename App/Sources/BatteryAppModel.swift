@@ -17,6 +17,7 @@ final class BatteryAppModel: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var nearcastCode: String?
     @Published private(set) var trustedPeers: [TrustedPeer] = []
+    @Published private(set) var perDeviceAlertRules: [AlertRule] = []
 
     let preferences = AppPreferences()
     var onStatusTitleChange: ((String) -> Void)?
@@ -139,6 +140,41 @@ final class BatteryAppModel: ObservableObject {
 
     func requestNotificationPermission() {
         notificationController.requestAuthorization()
+    }
+
+    func alertRule(for deviceID: UUID) -> AlertRule? {
+        perDeviceAlertRules.first { $0.deviceID == deviceID }
+    }
+
+    func saveAlertOverride(
+        deviceID: UUID,
+        lowEnabled: Bool,
+        lowThreshold: Int,
+        fullEnabled: Bool,
+        fullThreshold: Int
+    ) {
+        perDeviceAlertRules.removeAll { $0.deviceID == deviceID }
+        perDeviceAlertRules.append(
+            AlertRule(
+                deviceID: deviceID,
+                lowThreshold: lowThreshold,
+                fullThreshold: fullThreshold,
+                lowEnabled: lowEnabled,
+                fullEnabled: fullEnabled
+            )
+        )
+        Task {
+            do { try await repository?.save(alertRules: perDeviceAlertRules) }
+            catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func removeAlertOverride(deviceID: UUID) {
+        perDeviceAlertRules.removeAll { $0.deviceID == deviceID }
+        Task {
+            do { try await repository?.save(alertRules: perDeviceAlertRules) }
+            catch { errorMessage = error.localizedDescription }
+        }
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -281,6 +317,7 @@ final class BatteryAppModel: ObservableObject {
             let loadedDevices = try await repository.loadDevices()
             let localDevices = loadedDevices.filter { $0.originMacID == originMacID }
             let alertStates = try await repository.loadAlertStates()
+            perDeviceAlertRules = try await repository.loadAlertRules()
             resolver = DeviceResolver(existingDevices: localDevices, originMacID: originMacID)
             alertEngine = AlertEngine(states: alertStates)
             devices = localDevices
@@ -324,7 +361,11 @@ final class BatteryAppModel: ObservableObject {
                 lowEnabled: preferences.lowAlerts,
                 fullEnabled: preferences.fullAlerts
             )
-            let alerts = await alertEngine?.evaluate(devices: devices, rules: [rule], now: Date()) ?? []
+            let alerts = await alertEngine?.evaluate(
+                devices: devices,
+                rules: perDeviceAlertRules + [rule],
+                now: Date()
+            ) ?? []
             for alert in alerts { notificationController.deliver(alert, sound: preferences.alertSound) }
             if let states = await alertEngine?.allStates() {
                 try await repository?.save(alertStates: states)

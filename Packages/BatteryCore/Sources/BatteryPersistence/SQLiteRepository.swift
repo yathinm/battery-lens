@@ -85,6 +85,14 @@ public actor SQLiteDeviceRepository: DeviceRepository {
         try save(alertStates, key: "alert_states")
     }
 
+    public func loadAlertRules() throws -> [AlertRule] {
+        try load([AlertRule].self, key: "alert_rules") ?? []
+    }
+
+    public func save(alertRules: [AlertRule]) throws {
+        try save(alertRules, key: "alert_rules")
+    }
+
     public func loadAdapterHealth() throws -> [AdapterHealth] {
         try load([AdapterHealth].self, key: "adapter_health") ?? []
     }

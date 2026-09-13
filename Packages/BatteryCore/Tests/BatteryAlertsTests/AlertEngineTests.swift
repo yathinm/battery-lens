@@ -38,3 +38,15 @@ private func makeDevice(level: Int, state: PowerState = .discharging, observedAt
 
     #expect(await engine.evaluate(devices: [device], rules: [rule], now: Date()).isEmpty)
 }
+
+@Test func perDeviceRuleOverridesGlobalRule() async {
+    let now = Date(timeIntervalSince1970: 500)
+    let device = makeDevice(level: 15, observedAt: now)
+    let global = AlertRule(lowThreshold: 10, lowEnabled: true)
+    let override = AlertRule(deviceID: device.id, lowThreshold: 20, lowEnabled: true)
+    let engine = AlertEngine(suppressionInterval: 0)
+
+    let alerts = await engine.evaluate(devices: [device], rules: [global, override], now: now)
+    #expect(alerts.count == 1)
+    #expect(alerts[0].kind == .low)
+}

@@ -69,6 +69,8 @@ public protocol DeviceRepository: Sendable {
     func save(devices: [BatteryDevice]) async throws
     func loadAlertStates() async throws -> [AlertState]
     func save(alertStates: [AlertState]) async throws
+    func loadAlertRules() async throws -> [AlertRule]
+    func save(alertRules: [AlertRule]) async throws
     func loadAdapterHealth() async throws -> [AdapterHealth]
     func save(adapterHealth: [AdapterHealth]) async throws
 }

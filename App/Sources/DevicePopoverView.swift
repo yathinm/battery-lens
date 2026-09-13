@@ -4,6 +4,7 @@ import SwiftUI
 struct DevicePopoverView: View {
     @ObservedObject var model: BatteryAppModel
     let openSettings: () -> Void
+    @State private var selectedDevice: BatteryDevice?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,6 +15,9 @@ struct DevicePopoverView: View {
             footer
         }
         .frame(minWidth: 360, idealWidth: 380, minHeight: 420, idealHeight: 520)
+        .sheet(item: $selectedDevice) { device in
+            DeviceDetailsView(model: model, device: device)
+        }
     }
 
     private var header: some View {
@@ -66,6 +70,7 @@ struct DevicePopoverView: View {
                     ForEach(model.visibleDevices) { device in
                         DeviceRow(
                             device: device,
+                            details: { selectedDevice = device },
                             hide: { model.setHidden(true, deviceID: device.id) },
                             pin: { model.setPinned(!device.isPinned, deviceID: device.id) }
                         )
@@ -96,6 +101,7 @@ struct DevicePopoverView: View {
 
 private struct DeviceRow: View {
     let device: BatteryDevice
+    let details: () -> Void
     let hide: () -> Void
     let pin: () -> Void
 
@@ -128,7 +134,9 @@ private struct DeviceRow: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .contentShape(Rectangle())
+        .onTapGesture(perform: details)
         .contextMenu {
+            Button("Details", action: details)
             Button(device.isPinned ? "Unpin" : "Pin", action: pin)
             Button("Hide", action: hide)
         }
@@ -175,6 +183,78 @@ private struct DeviceRow: View {
         case .pencil: "applepencil"
         case .other: "battery.75"
         }
+    }
+}
+
+private struct DeviceDetailsView: View {
+    @ObservedObject var model: BatteryAppModel
+    let device: BatteryDevice
+    @Environment(\.presentationMode) private var presentationMode
+    @State private var lowEnabled: Bool
+    @State private var lowThreshold: Int
+    @State private var fullEnabled: Bool
+    @State private var fullThreshold: Int
+    private let hadOverride: Bool
+
+    init(model: BatteryAppModel, device: BatteryDevice) {
+        self.model = model
+        self.device = device
+        let rule = model.alertRule(for: device.id)
+        hadOverride = rule != nil
+        _lowEnabled = State(initialValue: rule?.lowEnabled ?? model.preferences.lowAlerts)
+        _lowThreshold = State(initialValue: rule?.lowThreshold ?? model.preferences.lowThreshold)
+        _fullEnabled = State(initialValue: rule?.fullEnabled ?? model.preferences.fullAlerts)
+        _fullThreshold = State(initialValue: rule?.fullThreshold ?? model.preferences.fullThreshold)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(device.displayName).font(.title2).fontWeight(.semibold)
+                    if let modelName = device.model { Text(modelName).foregroundColor(.secondary) }
+                }
+                Spacer()
+                Text(device.batteryLevel.map { "\($0)%" } ?? "—")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+            }
+            Divider()
+            Form {
+                Text("State: \(device.powerState.rawValue)")
+                Text("Freshness: \(device.freshness.rawValue)")
+                Text("Observed: \(relativeDate(device.observedAt))")
+                Text("Sources: \(Array(Set(device.sourceKeys.map(\.namespace))).sorted().joined(separator: ", "))")
+                Toggle("Low battery alert", isOn: $lowEnabled)
+                Stepper("Low threshold: \(lowThreshold)%", value: $lowThreshold, in: 1...50)
+                    .disabled(!lowEnabled)
+                Toggle("Full battery alert", isOn: $fullEnabled)
+                Stepper("Full threshold: \(fullThreshold)%", value: $fullThreshold, in: 50...100)
+                    .disabled(!fullEnabled)
+            }
+            HStack {
+                if hadOverride {
+                    Button("Use Global Alert Settings") {
+                        model.removeAlertOverride(deviceID: device.id)
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                Spacer()
+                Button("Cancel") { presentationMode.wrappedValue.dismiss() }
+                Button("Save") {
+                    model.saveAlertOverride(
+                        deviceID: device.id,
+                        lowEnabled: lowEnabled,
+                        lowThreshold: lowThreshold,
+                        fullEnabled: fullEnabled,
+                        fullThreshold: fullThreshold
+                    )
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 480, height: 430)
     }
 }
 
