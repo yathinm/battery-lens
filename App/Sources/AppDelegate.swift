@@ -1,4 +1,6 @@
 import AppKit
+import BatteryDomain
+import Combine
 import SwiftUI
 
 @MainActor
@@ -7,6 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let popover = NSPopover()
     private var settingsController: NSWindowController?
     private var model: BatteryAppModel?
+    private var pinnedItems: [UUID: NSStatusItem] = [:]
+    private var cancellables: Set<AnyCancellable> = []
+    private let dockCarousel = DockCarouselController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let model = BatteryAppModel()
@@ -33,11 +38,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.onStatusTitleChange = { [weak self] title in
             self?.statusItem.button?.title = title
         }
+        model.$devices
+            .combineLatest(model.preferences.$dockCarousel, model.preferences.$showDock)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] devices, carousel, showDock in
+                self?.updatePinnedItems(devices)
+                self?.dockCarousel.update(devices: devices, enabled: carousel && showDock)
+            }
+            .store(in: &cancellables)
         model.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         model?.stop()
+        dockCarousel.stop()
+    }
+
+    @objc private func showMainPopover(_ sender: NSStatusBarButton) {
+        guard let button = statusItem.button else { return }
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+    }
+
+    private func updatePinnedItems(_ devices: [BatteryDevice]) {
+        let pinned = Dictionary(uniqueKeysWithValues: devices.filter(\.isPinned).map { ($0.id, $0) })
+        for id in pinnedItems.keys where pinned[id] == nil {
+            if let item = pinnedItems.removeValue(forKey: id) { NSStatusBar.system.removeStatusItem(item) }
+        }
+        for (id, device) in pinned {
+            let item = pinnedItems[id] ?? NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            pinnedItems[id] = item
+            guard let button = item.button else { continue }
+            button.image = NSImage(systemSymbolName: deviceSymbol(device.category), accessibilityDescription: device.displayName)
+            button.title = " " + (device.batteryLevel.map { "\($0)%" } ?? "—")
+            button.target = self
+            button.action = #selector(showMainPopover(_:))
+            button.toolTip = "\(device.displayName): \(device.batteryLevel.map { "\($0)%" } ?? "Unavailable")"
+        }
+    }
+
+    private func deviceSymbol(_ category: DeviceCategory) -> String {
+        switch category {
+        case .mac: "laptopcomputer"
+        case .phone: "iphone"
+        case .tablet: "ipad"
+        case .watch: "applewatch"
+        case .earbuds, .caseBattery: "airpodspro"
+        case .mouse: "computermouse"
+        case .keyboard: "keyboard"
+        case .trackpad: "rectangle.and.hand.point.up.left"
+        case .pencil: "applepencil"
+        case .other: "battery.75"
+        }
     }
 
     @objc private func togglePopover(_ sender: Any?) {

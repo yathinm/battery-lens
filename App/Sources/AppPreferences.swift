@@ -16,6 +16,7 @@ final class AppPreferences: ObservableObject {
         static let fullThreshold = "fullThreshold"
         static let alertSound = "alertSound"
         static let showDock = "showDock"
+        static let dockCarousel = "dockCarousel"
         static let diagnosticRetentionDays = "diagnosticRetentionDays"
     }
 
@@ -37,6 +38,7 @@ final class AppPreferences: ObservableObject {
             NSApplication.shared.setActivationPolicy(showDock ? .regular : .accessory)
         }
     }
+    @Published var dockCarousel: Bool { didSet { defaults.set(dockCarousel, forKey: Key.dockCarousel) } }
     @Published var diagnosticRetentionDays: Int {
         didSet { defaults.set(diagnosticRetentionDays, forKey: Key.diagnosticRetentionDays) }
     }
@@ -55,6 +57,7 @@ final class AppPreferences: ObservableObject {
             Key.fullThreshold: 100,
             Key.alertSound: true,
             Key.showDock: false,
+            Key.dockCarousel: true,
             Key.diagnosticRetentionDays: 7,
         ])
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
@@ -68,6 +71,7 @@ final class AppPreferences: ObservableObject {
         fullThreshold = defaults.integer(forKey: Key.fullThreshold)
         alertSound = defaults.bool(forKey: Key.alertSound)
         showDock = defaults.bool(forKey: Key.showDock)
+        dockCarousel = defaults.bool(forKey: Key.dockCarousel)
         diagnosticRetentionDays = defaults.integer(forKey: Key.diagnosticRetentionDays)
     }
 }

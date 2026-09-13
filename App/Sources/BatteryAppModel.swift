@@ -25,8 +25,10 @@ final class BatteryAppModel: ObservableObject {
     private var snapshotStore: SnapshotStore?
     private let originMacID: UUID
     private let notificationController = NotificationController()
+    private let loginItemController = LoginItemController()
     private var refreshTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
+    private var discoverySignature: DiscoverySignature?
 
     init() {
         let defaults = UserDefaults.standard
@@ -108,6 +110,17 @@ final class BatteryAppModel: ObservableObject {
         notificationController.requestAuthorization()
     }
 
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try loginItemController.setEnabled(enabled)
+            objectWillChange.send()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    var isLaunchAtLoginEnabled: Bool { loginItemController.isEnabled }
+
     func eraseDevices() {
         Task {
             guard let repository else { return }
@@ -132,14 +145,8 @@ final class BatteryAppModel: ObservableObject {
             self.repository = repository
             snapshotStore = try SnapshotStore(directoryURL: snapshotDirectory)
 
-            var adapters: [any DiscoveryAdapter] = [MacPowerAdapter()]
-            if preferences.bluetoothAccessories { adapters.append(IORegistryAccessoryAdapter()) }
-            if preferences.genericBLE { adapters.append(GenericBLEBatteryAdapter()) }
-            if preferences.pairedDevices,
-               let helperURL = Bundle.main.url(forAuxiliaryExecutable: "PairedDeviceHelper") {
-                adapters.append(PairedDeviceAdapter(executableURL: helperURL))
-            }
-            scheduler = ScanScheduler(adapters: adapters)
+            scheduler = makeScheduler()
+            discoverySignature = currentDiscoverySignature
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -214,6 +221,38 @@ final class BatteryAppModel: ObservableObject {
     private func preferencesChanged() {
         updateStatusTitle()
         resetRefreshTimer()
+        let signature = currentDiscoverySignature
+        guard signature != discoverySignature else { return }
+        discoverySignature = signature
+        Task { await reconfigureDiscovery() }
+    }
+
+    private func reconfigureDiscovery() async {
+        let oldScheduler = scheduler
+        let replacement = makeScheduler()
+        scheduler = replacement
+        await oldScheduler?.stop()
+        await replacement.start()
+        refresh(reason: .manual)
+    }
+
+    private func makeScheduler() -> ScanScheduler {
+        var adapters: [any DiscoveryAdapter] = [MacPowerAdapter()]
+        if preferences.bluetoothAccessories { adapters.append(IORegistryAccessoryAdapter()) }
+        if preferences.genericBLE { adapters.append(GenericBLEBatteryAdapter()) }
+        if preferences.pairedDevices,
+           let helperURL = Bundle.main.url(forAuxiliaryExecutable: "PairedDeviceHelper") {
+            adapters.append(PairedDeviceAdapter(executableURL: helperURL))
+        }
+        return ScanScheduler(adapters: adapters)
+    }
+
+    private var currentDiscoverySignature: DiscoverySignature {
+        DiscoverySignature(
+            accessories: preferences.bluetoothAccessories,
+            genericBLE: preferences.genericBLE,
+            pairedDevices: preferences.pairedDevices
+        )
     }
 
     private func resetRefreshTimer() {
@@ -248,4 +287,10 @@ final class BatteryAppModel: ObservableObject {
     }
 
     private static let globalRuleID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+}
+
+private struct DiscoverySignature: Equatable {
+    let accessories: Bool
+    let genericBLE: Bool
+    let pairedDevices: Bool
 }

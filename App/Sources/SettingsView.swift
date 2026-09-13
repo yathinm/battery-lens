@@ -4,6 +4,7 @@ struct SettingsView: View {
     @ObservedObject var model: BatteryAppModel
     @ObservedObject private var preferences: AppPreferences
     @State private var showEraseConfirmation = false
+    @State private var launchAtLogin = false
 
     init(model: BatteryAppModel) {
         self.model = model
@@ -25,12 +26,22 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(minWidth: 640, minHeight: 460)
+        .onAppear { launchAtLogin = model.isLaunchAtLoginEnabled }
     }
 
     private var general: some View {
         Form {
             Toggle("Show percentage in the menu bar", isOn: $preferences.showPercentage)
             Toggle("Show BatteryLens in the Dock", isOn: $preferences.showDock)
+            Toggle("Cycle devices in the Dock", isOn: $preferences.dockCarousel)
+                .disabled(!preferences.showDock)
+            Toggle("Launch at login", isOn: Binding(
+                get: { launchAtLogin },
+                set: { value in
+                    launchAtLogin = value
+                    model.setLaunchAtLogin(value)
+                }
+            ))
             Picker("Refresh interval", selection: $preferences.refreshInterval) {
                 Text("30 seconds").tag(30.0)
                 Text("1 minute").tag(60.0)
@@ -56,7 +67,7 @@ struct SettingsView: View {
             Toggle("Apple and Bluetooth accessories", isOn: $preferences.bluetoothAccessories)
             Toggle("Generic Bluetooth Battery Service", isOn: $preferences.genericBLE)
             Toggle("Paired iPhone and iPad", isOn: $preferences.pairedDevices)
-            Text("Source changes apply after BatteryLens is relaunched.")
+            Text("Discovery changes take effect immediately.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
