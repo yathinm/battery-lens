@@ -75,15 +75,6 @@ public protocol DeviceRepository: Sendable {
     func save(adapterHealth: [AdapterHealth]) async throws
 }
 
-public protocol DateProviding: Sendable {
-    var now: Date { get }
-}
-
-public struct SystemDateProvider: DateProviding {
-    public init() {}
-    public var now: Date { Date() }
-}
-
 public enum AlertZone: String, Codable, Sendable {
     case unknown, belowLow, normal, atFull
 }
