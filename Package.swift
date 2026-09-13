@@ -18,7 +18,7 @@ let package = Package(
             name: "BatteryPersistence",
             dependencies: ["BatteryDomain"],
             path: "Packages/BatteryCore/Sources/BatteryPersistence",
-            linkerSettings: [.linkedLibrary("sqlite3")]
+            linkerSettings: [.linkedLibrary("sqlite3"), .linkedFramework("Security")]
         ),
         .target(
             name: "BatteryDiscovery",
@@ -52,6 +52,11 @@ let package = Package(
             name: "BatteryAlertsTests",
             dependencies: ["BatteryAlerts", "BatteryDomain"],
             path: "Packages/BatteryCore/Tests/BatteryAlertsTests"
+        ),
+        .testTarget(
+            name: "BatteryPeersTests",
+            dependencies: ["BatteryPeers", "BatteryDomain"],
+            path: "Packages/BatteryCore/Tests/BatteryPeersTests"
         ),
     ]
 )

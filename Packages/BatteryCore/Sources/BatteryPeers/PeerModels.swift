@@ -42,3 +42,15 @@ public struct PeerEnvelope: Codable, Hashable, Sendable {
         self.authenticationTag = authenticationTag
     }
 }
+
+public struct TrustedPeer: Codable, Hashable, Identifiable, Sendable {
+    public let id: UUID
+    public var displayName: String
+    public var lastSeenAt: Date
+
+    public init(id: UUID, displayName: String, lastSeenAt: Date) {
+        self.id = id
+        self.displayName = displayName
+        self.lastSeenAt = lastSeenAt
+    }
+}
