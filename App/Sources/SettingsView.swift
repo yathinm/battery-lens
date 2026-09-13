@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @ObservedObject var model: BatteryAppModel
     @ObservedObject private var preferences: AppPreferences
+    @ObservedObject private var permissionController: PermissionController
     @State private var showEraseConfirmation = false
     @State private var launchAtLogin = false
     @State private var joinCode = ""
@@ -11,6 +12,7 @@ struct SettingsView: View {
     init(model: BatteryAppModel) {
         self.model = model
         preferences = model.preferences
+        permissionController = model.permissionController
     }
 
     var body: some View {
@@ -76,6 +78,7 @@ struct SettingsView: View {
     private var general: some View {
         Form {
             Toggle("Show percentage in the menu bar", isOn: $preferences.showPercentage)
+            Toggle("Show BatteryLens in the menu bar", isOn: $preferences.showMenuBar)
             Toggle("Show BatteryLens in the Dock", isOn: $preferences.showDock)
             Toggle("Cycle devices in the Dock", isOn: $preferences.dockCarousel)
                 .disabled(!preferences.showDock)
@@ -190,7 +193,21 @@ struct SettingsView: View {
             Text("Local network sharing is off unless you enable it in a future sharing setup.")
                 .font(.caption)
                 .foregroundColor(.secondary)
+            Divider()
+            HStack {
+                Text("Bluetooth")
+                Spacer()
+                Text(permissionController.bluetooth).foregroundColor(.secondary)
+                Button("Open Settings") { permissionController.openBluetoothSettings() }
+            }
+            HStack {
+                Text("Notifications")
+                Spacer()
+                Text(permissionController.notifications).foregroundColor(.secondary)
+                Button("Open Settings") { permissionController.openNotificationSettings() }
+            }
         }
+        .onAppear { permissionController.refresh() }
     }
 }
 

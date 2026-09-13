@@ -11,6 +11,7 @@
 		2377D0E4FD5B9CEF25C55FE1 /* PairedDeviceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1067BFAE20D8BDA86E04C87 /* PairedDeviceAdapter.swift */; };
 		40EFF9599CF4A1335865D6F0 /* BatteryDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 566ABCBF3F0DD0976567E818 /* BatteryDomain */; };
 		436CD284C22A84871BB238EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0526DB462C6050EA86FD43EE /* AppDelegate.swift */; };
+		53317898AAE8B0231386F934 /* PermissionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49F86050AE7D80F5FFFF0D86 /* PermissionController.swift */; };
 		67EA800F7F8DA3111A442273 /* BatteryPeers in Frameworks */ = {isa = PBXBuildFile; productRef = 36B8B6D919325EB8A6331B45 /* BatteryPeers */; };
 		7AA0D5E5204DE19278042975 /* DiagnosticExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FF39B05269FF40896430EF /* DiagnosticExporter.swift */; };
 		7BD257CBE9698E1147EF11EA /* BatteryAlerts in Frameworks */ = {isa = PBXBuildFile; productRef = A33F7F25CAF2681B0373C8FD /* BatteryAlerts */; };
@@ -25,6 +26,7 @@
 		D1CBBC44F9E26E8B79ACC0D2 /* BatteryLensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE856DE90126B9CA2F97C88 /* BatteryLensTests.swift */; };
 		DCF4BEFEC864900846E290D5 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = F847FDBF447F426B65294FF9 /* AppPreferences.swift */; };
 		DF21BAB3FA6F897AC8995974 /* BatteryAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF592C262F0A15B065AC5603 /* BatteryAppModel.swift */; };
+		E3F26ADA8D4748A93FDA5B21 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C74F449050FA65F3592BAC61 /* OnboardingView.swift */; };
 		EC765F1FA2BE94D5D7A35CB7 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 261258B7E4BEDC5183D5B508 /* main.swift */; };
 		EE44084F244A1B7DD5EBF6AE /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67F149F5B98C5BE2813887E7 /* SettingsView.swift */; };
 		F552C04D3587BB63BBC4D486 /* BatteryLensWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 12A91F8D46F15ECCC071BA1D /* BatteryLensWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -86,6 +88,7 @@
 		12A91F8D46F15ECCC071BA1D /* BatteryLensWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BatteryLensWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF2DBF1CC0B841888995AF2 /* DockCarouselController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockCarouselController.swift; sourceTree = "<group>"; };
 		261258B7E4BEDC5183D5B508 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		49F86050AE7D80F5FFFF0D86 /* PermissionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionController.swift; sourceTree = "<group>"; };
 		655E4204FA93F6951A1CE9D2 /* BatteryLensTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BatteryLensTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		67F149F5B98C5BE2813887E7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6EE856DE90126B9CA2F97C88 /* BatteryLensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryLensTests.swift; sourceTree = "<group>"; };
@@ -96,6 +99,7 @@
 		83A85294E660EA5DEFAB901C /* DevicePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePopoverView.swift; sourceTree = "<group>"; };
 		983FB5BC40ED2C1E20D34918 /* PairedDeviceHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = PairedDeviceHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD59876249DE307078076F88 /* BatteryLensWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryLensWidgets.swift; sourceTree = "<group>"; };
+		C74F449050FA65F3592BAC61 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D1067BFAE20D8BDA86E04C87 /* PairedDeviceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairedDeviceAdapter.swift; sourceTree = "<group>"; };
 		EF592C262F0A15B065AC5603 /* BatteryAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryAppModel.swift; sourceTree = "<group>"; };
 		F847FDBF447F426B65294FF9 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
@@ -154,7 +158,9 @@
 				1DF2DBF1CC0B841888995AF2 /* DockCarouselController.swift */,
 				F8FFDB4BB9001D32137FC1A3 /* LoginItemController.swift */,
 				017FF0F60CA842CE95EF4836 /* NotificationController.swift */,
+				C74F449050FA65F3592BAC61 /* OnboardingView.swift */,
 				D1067BFAE20D8BDA86E04C87 /* PairedDeviceAdapter.swift */,
+				49F86050AE7D80F5FFFF0D86 /* PermissionController.swift */,
 				67F149F5B98C5BE2813887E7 /* SettingsView.swift */,
 			);
 			path = Sources;
@@ -397,7 +403,9 @@
 				B35E0E56BB436D909C150E7A /* DockCarouselController.swift in Sources */,
 				A8FC7EF902FF2A7C2484CC21 /* LoginItemController.swift in Sources */,
 				9018DC4179F17BEAA7B3633F /* NotificationController.swift in Sources */,
+				E3F26ADA8D4748A93FDA5B21 /* OnboardingView.swift in Sources */,
 				2377D0E4FD5B9CEF25C55FE1 /* PairedDeviceAdapter.swift in Sources */,
+				53317898AAE8B0231386F934 /* PermissionController.swift in Sources */,
 				EE44084F244A1B7DD5EBF6AE /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -11,6 +11,7 @@ struct DiagnosticExport: Codable {
 
     struct Settings: Codable {
         let refreshInterval: TimeInterval
+        let showMenuBar: Bool
         let showPercentage: Bool
         let accessoryDiscovery: Bool
         let genericBLEDiscovery: Bool
@@ -57,6 +58,7 @@ enum DiagnosticExporter {
             ),
             settings: .init(
                 refreshInterval: preferences.refreshInterval,
+                showMenuBar: preferences.showMenuBar,
                 showPercentage: preferences.showPercentage,
                 accessoryDiscovery: preferences.bluetoothAccessories,
                 genericBLEDiscovery: preferences.genericBLE,

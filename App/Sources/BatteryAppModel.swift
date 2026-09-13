@@ -20,6 +20,7 @@ final class BatteryAppModel: ObservableObject {
     @Published private(set) var perDeviceAlertRules: [AlertRule] = []
 
     let preferences = AppPreferences()
+    let permissionController = PermissionController()
     var onStatusTitleChange: ((String) -> Void)?
 
     private var repository: SQLiteDeviceRepository?
@@ -69,6 +70,7 @@ final class BatteryAppModel: ObservableObject {
 
     func start() {
         notificationController.configure()
+        permissionController.refresh()
         observeSystemEvents()
         Task {
             await scheduler?.start()
@@ -140,6 +142,7 @@ final class BatteryAppModel: ObservableObject {
 
     func requestNotificationPermission() {
         notificationController.requestAuthorization()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.permissionController.refresh() }
     }
 
     func alertRule(for deviceID: UUID) -> AlertRule? {

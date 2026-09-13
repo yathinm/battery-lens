@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
     private var settingsController: NSWindowController?
+    private var onboardingController: NSWindowController?
     private var model: BatteryAppModel?
     private var pinnedItems: [UUID: NSStatusItem] = [:]
     private var cancellables: Set<AnyCancellable> = []
@@ -46,7 +47,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.dockCarousel.update(devices: devices, enabled: carousel && showDock)
             }
             .store(in: &cancellables)
+        model.preferences.$showMenuBar
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isVisible in self?.statusItem.isVisible = isVisible }
+            .store(in: &cancellables)
         model.start()
+        showOnboardingIfNeeded(model: model)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { openSettings() }
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -139,5 +150,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         settingsController?.showWindow(nil)
         settingsController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func showOnboardingIfNeeded(model: BatteryAppModel) {
+        guard !UserDefaults.standard.bool(forKey: "onboardingComplete") else { return }
+        let view = OnboardingView(model: model) { [weak self] in
+            UserDefaults.standard.set(true, forKey: "onboardingComplete")
+            self?.onboardingController?.close()
+            self?.onboardingController = nil
+        }
+        let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+        window.title = "Welcome to BatteryLens"
+        window.styleMask = [.titled, .closable]
+        window.center()
+        window.isReleasedWhenClosed = false
+        onboardingController = NSWindowController(window: window)
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingController?.showWindow(nil)
     }
 }

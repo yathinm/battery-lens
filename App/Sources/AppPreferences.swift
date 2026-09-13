@@ -6,6 +6,7 @@ import Foundation
 final class AppPreferences: ObservableObject {
     private enum Key {
         static let refreshInterval = "refreshInterval"
+        static let showMenuBar = "showMenuBar"
         static let showPercentage = "showPercentage"
         static let bluetoothAccessories = "bluetoothAccessories"
         static let genericBLE = "genericBLE"
@@ -24,6 +25,7 @@ final class AppPreferences: ObservableObject {
     private let defaults: UserDefaults
 
     @Published var refreshInterval: TimeInterval { didSet { defaults.set(refreshInterval, forKey: Key.refreshInterval) } }
+    @Published var showMenuBar: Bool { didSet { defaults.set(showMenuBar, forKey: Key.showMenuBar) } }
     @Published var showPercentage: Bool { didSet { defaults.set(showPercentage, forKey: Key.showPercentage) } }
     @Published var bluetoothAccessories: Bool { didSet { defaults.set(bluetoothAccessories, forKey: Key.bluetoothAccessories) } }
     @Published var genericBLE: Bool { didSet { defaults.set(genericBLE, forKey: Key.genericBLE) } }
@@ -51,6 +53,7 @@ final class AppPreferences: ObservableObject {
         self.defaults = defaults
         defaults.register(defaults: [
             Key.refreshInterval: 60.0,
+            Key.showMenuBar: true,
             Key.showPercentage: true,
             Key.bluetoothAccessories: true,
             Key.genericBLE: false,
@@ -66,6 +69,7 @@ final class AppPreferences: ObservableObject {
             Key.localNetworkSharing: false,
         ])
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
+        showMenuBar = defaults.bool(forKey: Key.showMenuBar)
         showPercentage = defaults.bool(forKey: Key.showPercentage)
         bluetoothAccessories = defaults.bool(forKey: Key.bluetoothAccessories)
         genericBLE = defaults.bool(forKey: Key.genericBLE)
