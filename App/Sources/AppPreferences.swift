@@ -18,6 +18,7 @@ final class AppPreferences: ObservableObject {
         static let showDock = "showDock"
         static let dockCarousel = "dockCarousel"
         static let diagnosticRetentionDays = "diagnosticRetentionDays"
+        static let localNetworkSharing = "localNetworkSharing"
     }
 
     private let defaults: UserDefaults
@@ -42,6 +43,9 @@ final class AppPreferences: ObservableObject {
     @Published var diagnosticRetentionDays: Int {
         didSet { defaults.set(diagnosticRetentionDays, forKey: Key.diagnosticRetentionDays) }
     }
+    @Published var localNetworkSharing: Bool {
+        didSet { defaults.set(localNetworkSharing, forKey: Key.localNetworkSharing) }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -59,6 +63,7 @@ final class AppPreferences: ObservableObject {
             Key.showDock: false,
             Key.dockCarousel: true,
             Key.diagnosticRetentionDays: 7,
+            Key.localNetworkSharing: false,
         ])
         refreshInterval = defaults.double(forKey: Key.refreshInterval)
         showPercentage = defaults.bool(forKey: Key.showPercentage)
@@ -73,5 +78,6 @@ final class AppPreferences: ObservableObject {
         showDock = defaults.bool(forKey: Key.showDock)
         dockCarousel = defaults.bool(forKey: Key.dockCarousel)
         diagnosticRetentionDays = defaults.integer(forKey: Key.diagnosticRetentionDays)
+        localNetworkSharing = defaults.bool(forKey: Key.localNetworkSharing)
     }
 }

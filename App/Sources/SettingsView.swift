@@ -5,6 +5,7 @@ struct SettingsView: View {
     @ObservedObject private var preferences: AppPreferences
     @State private var showEraseConfirmation = false
     @State private var launchAtLogin = false
+    @State private var joinCode = ""
 
     init(model: BatteryAppModel) {
         self.model = model
@@ -19,6 +20,8 @@ struct SettingsView: View {
                 .tabItem { Label("Discovery", systemImage: "antenna.radiowaves.left.and.right") }
             alerts
                 .tabItem { Label("Alerts", systemImage: "bell") }
+            nearcast
+                .tabItem { Label("Sharing", systemImage: "network") }
             diagnostics
                 .tabItem { Label("Diagnostics", systemImage: "stethoscope") }
             privacy
@@ -27,6 +30,46 @@ struct SettingsView: View {
         .padding(20)
         .frame(minWidth: 640, minHeight: 460)
         .onAppear { launchAtLogin = model.isLaunchAtLoginEnabled }
+    }
+
+    private var nearcast: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Trusted Mac Sharing").font(.headline)
+            Text("Share redacted battery snapshots with Macs that have the same trust-group code. Messages stay on the local network and are authenticated and encrypted.")
+                .foregroundColor(.secondary)
+            if preferences.localNetworkSharing, let code = model.nearcastCode {
+                Text("Trust-group code").font(.caption).foregroundColor(.secondary)
+                HStack {
+                    Text(code).font(.system(.body, design: .monospaced)).lineLimit(1)
+                    Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(code, forType: .string) }
+                }
+                if model.trustedPeers.isEmpty {
+                    Text("Waiting for trusted Macs on this network…").foregroundColor(.secondary)
+                } else {
+                    List(model.trustedPeers) { peer in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(peer.displayName)
+                                Text("Seen \(settingsRelativeDate(peer.lastSeenAt))")
+                                    .font(.caption).foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Revoke") { model.revokePeer(peer) }
+                                .help("Rotates the trust-group code. Other Macs must join again.")
+                        }
+                    }
+                }
+                Button("Disable and Forget Group") { model.disableNearcast() }
+            } else {
+                Button("Create Trust Group") { model.createNearcastGroup() }
+                Divider()
+                TextField("Trust-group code", text: $joinCode)
+                Button("Join Trust Group") { model.joinNearcastGroup(code: joinCode) }
+                    .disabled(joinCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            Spacer()
+        }
+        .padding()
     }
 
     private var general: some View {
@@ -134,4 +177,10 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
         }
     }
+}
+
+private func settingsRelativeDate(_ date: Date) -> String {
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    return formatter.localizedString(for: date, relativeTo: Date())
 }

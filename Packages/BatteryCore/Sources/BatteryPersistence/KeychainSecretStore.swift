@@ -42,7 +42,7 @@ public struct KeychainSecretStore: Sendable {
         ]
         let attributes: [CFString: Any] = [
             kSecValueData: data,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
+            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
         let updateStatus = SecItemUpdate(lookup as CFDictionary, attributes as CFDictionary)
         if updateStatus == errSecItemNotFound {

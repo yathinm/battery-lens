@@ -3,6 +3,7 @@ import BatteryAlerts
 import BatteryDiscovery
 import BatteryDomain
 import BatteryPersistence
+import BatteryPeers
 import Combine
 import Foundation
 import WidgetKit
@@ -14,6 +15,8 @@ final class BatteryAppModel: ObservableObject {
     @Published private(set) var isRefreshing = false
     @Published private(set) var lastRefresh: Date?
     @Published private(set) var errorMessage: String?
+    @Published private(set) var nearcastCode: String?
+    @Published private(set) var trustedPeers: [TrustedPeer] = []
 
     let preferences = AppPreferences()
     var onStatusTitleChange: ((String) -> Void)?
@@ -26,6 +29,9 @@ final class BatteryAppModel: ObservableObject {
     private let originMacID: UUID
     private let notificationController = NotificationController()
     private let loginItemController = LoginItemController()
+    private let keychain = KeychainSecretStore()
+    private let nearcastService: NearcastService
+    private var remoteDevicesByMac: [UUID: [BatteryDevice]] = [:]
     private var refreshTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var discoverySignature: DiscoverySignature?
@@ -39,6 +45,7 @@ final class BatteryAppModel: ObservableObject {
             originMacID = id
             defaults.set(id.uuidString, forKey: "originMacID")
         }
+        nearcastService = NearcastService(localID: originMacID)
 
         preferences.objectWillChange
             .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
@@ -49,6 +56,7 @@ final class BatteryAppModel: ObservableObject {
             Task { await self?.snooze(deviceID: deviceID) }
         }
         configureDependencies()
+        configureNearcastCallbacks()
     }
 
     var visibleDevices: [BatteryDevice] {
@@ -63,6 +71,7 @@ final class BatteryAppModel: ObservableObject {
         Task {
             await scheduler?.start()
             await loadPersistedState()
+            await restoreNearcastIfEnabled()
             refresh(reason: .launch)
         }
         resetRefreshTimer()
@@ -71,6 +80,7 @@ final class BatteryAppModel: ObservableObject {
     func stop() {
         refreshTimer?.invalidate()
         Task { await scheduler?.stop() }
+        Task { await nearcastService.stop() }
     }
 
     func refresh(reason: RefreshReason) {
@@ -135,6 +145,62 @@ final class BatteryAppModel: ObservableObject {
         }
     }
 
+    func createNearcastGroup() {
+        Task {
+            do {
+                let secret = try NearcastSecret.generate()
+                try keychain.save(secret.data, account: Self.nearcastKeychainAccount)
+                nearcastCode = secret.code
+                preferences.localNetworkSharing = true
+                await nearcastService.start(secret: secret, displayName: Host.current().localizedName ?? "Mac")
+                await broadcastCurrentSnapshot()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func joinNearcastGroup(code: String) {
+        Task {
+            do {
+                let secret = try NearcastSecret(code: code.trimmingCharacters(in: .whitespacesAndNewlines))
+                try keychain.save(secret.data, account: Self.nearcastKeychainAccount)
+                nearcastCode = secret.code
+                preferences.localNetworkSharing = true
+                await nearcastService.start(secret: secret, displayName: Host.current().localizedName ?? "Mac")
+                await broadcastCurrentSnapshot()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func disableNearcast() {
+        preferences.localNetworkSharing = false
+        remoteDevicesByMac.removeAll()
+        devices = devices.filter { $0.originMacID == originMacID }
+        trustedPeers = []
+        nearcastCode = nil
+        try? keychain.delete(account: Self.nearcastKeychainAccount)
+        Task { await nearcastService.stop() }
+    }
+
+    func revokePeer(_ peer: TrustedPeer) {
+        Task {
+            do {
+                let replacement = try NearcastSecret.generate()
+                try keychain.save(replacement.data, account: Self.nearcastKeychainAccount)
+                nearcastCode = replacement.code
+                remoteDevicesByMac.removeAll()
+                devices = devices.filter { $0.originMacID == originMacID }
+                trustedPeers = []
+                await nearcastService.start(secret: replacement, displayName: Host.current().localizedName ?? "Mac")
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     private func configureDependencies() {
         do {
             let applicationSupport = try Self.applicationSupportDirectory()
@@ -156,10 +222,11 @@ final class BatteryAppModel: ObservableObject {
         guard let repository else { return }
         do {
             let loadedDevices = try await repository.loadDevices()
+            let localDevices = loadedDevices.filter { $0.originMacID == originMacID }
             let alertStates = try await repository.loadAlertStates()
-            resolver = DeviceResolver(existingDevices: loadedDevices, originMacID: originMacID)
+            resolver = DeviceResolver(existingDevices: localDevices, originMacID: originMacID)
             alertEngine = AlertEngine(states: alertStates)
-            devices = loadedDevices
+            devices = localDevices
             adapterHealth = try await repository.loadAdapterHealth()
             updateStatusTitle()
         } catch {
@@ -170,7 +237,7 @@ final class BatteryAppModel: ObservableObject {
     }
 
     private func publish(devices: [BatteryDevice], health: [AdapterHealth]) async {
-        self.devices = devices
+        self.devices = devices + remoteDevicesByMac.values.flatMap { $0 }
         adapterHealth = health
         lastRefresh = Date()
         updateStatusTitle()
@@ -182,6 +249,15 @@ final class BatteryAppModel: ObservableObject {
             try await snapshotStore?.publish(
                 WidgetSnapshot(generatedAt: Date(), originMacID: originMacID, devices: snapshotDevices)
             )
+            if preferences.localNetworkSharing {
+                try await nearcastService.broadcast(
+                    WidgetSnapshot(
+                        generatedAt: Date(),
+                        originMacID: originMacID,
+                        devices: devices.filter { !$0.isHidden && $0.freshness != .expired }.map(WidgetDevice.init)
+                    )
+                )
+            }
             if #available(macOS 11.0, *) { WidgetCenter.shared.reloadAllTimelines() }
 
             let rule = AlertRule(
@@ -225,6 +301,65 @@ final class BatteryAppModel: ObservableObject {
         guard signature != discoverySignature else { return }
         discoverySignature = signature
         Task { await reconfigureDiscovery() }
+    }
+
+    private func configureNearcastCallbacks() {
+        Task {
+            await nearcastService.setSnapshotHandler { [weak self] snapshot, peerName in
+                Task { @MainActor in self?.receiveRemoteSnapshot(snapshot, peerName: peerName) }
+            }
+            await nearcastService.setPeersHandler { [weak self] peers in
+                Task { @MainActor in self?.trustedPeers = peers }
+            }
+        }
+    }
+
+    private func restoreNearcastIfEnabled() async {
+        guard preferences.localNetworkSharing else { return }
+        do {
+            guard let data = try keychain.load(account: Self.nearcastKeychainAccount) else {
+                preferences.localNetworkSharing = false
+                return
+            }
+            let secret = try NearcastSecret(data: data)
+            nearcastCode = secret.code
+            await nearcastService.start(secret: secret, displayName: Host.current().localizedName ?? "Mac")
+        } catch {
+            preferences.localNetworkSharing = false
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func broadcastCurrentSnapshot() async {
+        let local = devices.filter { $0.originMacID == originMacID && !$0.isHidden && $0.freshness != .expired }
+        try? await nearcastService.broadcast(
+            WidgetSnapshot(generatedAt: Date(), originMacID: originMacID, devices: local.map(WidgetDevice.init))
+        )
+    }
+
+    private func receiveRemoteSnapshot(_ snapshot: WidgetSnapshot, peerName: String) {
+        let now = Date()
+        let remote = snapshot.devices.map { item in
+            let source = SourceKey(namespace: "nearcast.\(snapshot.originMacID.uuidString)", identifier: item.id.uuidString)
+            let age = now.timeIntervalSince(item.observedAt)
+            let freshness: Freshness = age >= 1_200 ? .expired : age >= 600 ? .stale : age >= 90 ? .aging : item.freshness
+            return BatteryDevice(
+                id: item.id,
+                sourceKeys: [source],
+                displayName: item.name,
+                category: item.category,
+                batteryLevel: item.level,
+                powerState: item.powerState,
+                originMacID: snapshot.originMacID,
+                observedAt: item.observedAt,
+                receivedAt: now,
+                freshness: freshness,
+                preferredSource: source
+            )
+        }
+        remoteDevicesByMac[snapshot.originMacID] = remote
+        let local = devices.filter { $0.originMacID == originMacID }
+        devices = local + remoteDevicesByMac.values.flatMap { $0 }
     }
 
     private func reconfigureDiscovery() async {
@@ -287,6 +422,7 @@ final class BatteryAppModel: ObservableObject {
     }
 
     private static let globalRuleID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    private static let nearcastKeychainAccount = "nearcast.group-secret"
 }
 
 private struct DiscoverySignature: Equatable {

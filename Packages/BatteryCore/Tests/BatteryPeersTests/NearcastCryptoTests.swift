@@ -67,3 +67,32 @@ import Testing
         try await guardActor.accept(envelope)
     }
 }
+
+@Test func nearcastRejectsExpiredEnvelope() throws {
+    let secret = try NearcastSecret(data: Data(repeating: 4, count: 32))
+    let createdAt = Date(timeIntervalSince1970: 10_000)
+    let envelope = try NearcastCipher.seal(
+        ["value": 1],
+        secret: secret,
+        senderID: UUID(),
+        sequence: 1,
+        messageType: .capability,
+        createdAt: createdAt,
+        lifetime: 10
+    )
+
+    #expect(throws: NearcastCryptoError.expired) {
+        try NearcastCipher.open(
+            [String: Int].self,
+            envelope: envelope,
+            secret: secret,
+            now: createdAt.addingTimeInterval(11)
+        )
+    }
+}
+
+@Test func nearcastCodeRoundTripsWithoutPadding() throws {
+    let original = try NearcastSecret.generate()
+    let decoded = try NearcastSecret(code: original.code)
+    #expect(decoded == original)
+}
