@@ -1,0 +1,105 @@
+name: BatteryLens
+options:
+  bundleIdPrefix: com.yathinm
+  deploymentTarget:
+    macOS: "11.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    CLANG_ENABLE_MODULES: YES
+    MACOSX_DEPLOYMENT_TARGET: "11.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+packages:
+  BatteryCore:
+    path: .
+targets:
+  BatteryLens:
+    type: application
+    platform: macOS
+    deploymentTarget: "11.0"
+    sources:
+      - path: App/Sources
+      - path: App/Resources
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yathinm.BatteryLens
+        PRODUCT_NAME: BatteryLens
+        INFOPLIST_FILE: App/Supporting/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Supporting/BatteryLens.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - package: BatteryCore
+        product: BatteryDomain
+      - package: BatteryCore
+        product: BatteryPersistence
+      - package: BatteryCore
+        product: BatteryDiscovery
+      - package: BatteryCore
+        product: BatteryAlerts
+      - package: BatteryCore
+        product: BatteryPeers
+      - target: BatteryLensWidget
+        embed: true
+      - target: PairedDeviceHelper
+        embed: true
+        codeSign: true
+        copy:
+          destination: executables
+  BatteryLensWidget:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: Widget/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yathinm.BatteryLens.Widget
+        PRODUCT_NAME: BatteryLensWidget
+        INFOPLIST_FILE: Widget/Supporting/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Widget/Supporting/BatteryLensWidget.entitlements
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: BatteryCore
+        product: BatteryDomain
+  PairedDeviceHelper:
+    type: tool
+    platform: macOS
+    deploymentTarget: "11.0"
+    sources:
+      - path: Helper/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yathinm.BatteryLens.PairedDeviceHelper
+        PRODUCT_NAME: PairedDeviceHelper
+        INFOPLIST_FILE: Helper/Info.plist
+        ENABLE_HARDENED_RUNTIME: YES
+  BatteryLensTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "11.0"
+    sources:
+      - path: Tests/BatteryLensTests
+    dependencies:
+      - target: BatteryLens
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yathinm.BatteryLensTests
+schemes:
+  BatteryLens:
+    build:
+      targets:
+        BatteryLens: all
+        BatteryLensWidget: all
+        PairedDeviceHelper: all
+    test:
+      targets:
+        - BatteryLensTests
+    run:
+      config: Debug
+    archive:
+      config: Release
