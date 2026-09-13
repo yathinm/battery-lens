@@ -19,6 +19,7 @@
 		81F7CF87D8D882B10D9E6F4E /* DevicePopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A85294E660EA5DEFAB901C /* DevicePopoverView.swift */; };
 		9018DC4179F17BEAA7B3633F /* NotificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017FF0F60CA842CE95EF4836 /* NotificationController.swift */; };
 		966F8D3DF1862C26995EF105 /* BatteryDomain in Frameworks */ = {isa = PBXBuildFile; productRef = F9A79DFDE4471D3ED53C2C19 /* BatteryDomain */; };
+		9F4097F690E1532766E8A7F5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B48DCC468D69D403F20A2AD3 /* Localizable.xcstrings */; };
 		A8FC7EF902FF2A7C2484CC21 /* LoginItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FFDB4BB9001D32137FC1A3 /* LoginItemController.swift */; };
 		B35E0E56BB436D909C150E7A /* DockCarouselController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF2DBF1CC0B841888995AF2 /* DockCarouselController.swift */; };
 		C2BF1F2A46180FBEEFBE9DE0 /* BatteryPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = EA253DDDB01A46A4D754A466 /* BatteryPersistence */; };
@@ -99,6 +100,7 @@
 		83A85294E660EA5DEFAB901C /* DevicePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePopoverView.swift; sourceTree = "<group>"; };
 		983FB5BC40ED2C1E20D34918 /* PairedDeviceHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = PairedDeviceHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD59876249DE307078076F88 /* BatteryLensWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryLensWidgets.swift; sourceTree = "<group>"; };
+		B48DCC468D69D403F20A2AD3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		C74F449050FA65F3592BAC61 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D1067BFAE20D8BDA86E04C87 /* PairedDeviceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairedDeviceAdapter.swift; sourceTree = "<group>"; };
 		EF592C262F0A15B065AC5603 /* BatteryAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryAppModel.swift; sourceTree = "<group>"; };
@@ -177,6 +179,7 @@
 		67A834E00BAAEA95579161E4 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B48DCC468D69D403F20A2AD3 /* Localizable.xcstrings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -253,6 +256,7 @@
 			buildConfigurationList = 7384BE2F35359ED0273E9AB8 /* Build configuration list for PBXNativeTarget "BatteryLens" */;
 			buildPhases = (
 				1F0D01F50ED931630790D323 /* Sources */,
+				C65315B1AA7159E857710B39 /* Resources */,
 				313DC2507552EC1E546EF0B9 /* Frameworks */,
 				DA9714A86B4012BE3367E71B /* Embed Foundation Extensions */,
 				969B7C25560EF32F0123635E /* Embed Dependencies */,
@@ -380,6 +384,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C65315B1AA7159E857710B39 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F4097F690E1532766E8A7F5 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1AAD9B9DB64B86659C194512 /* Sources */ = {

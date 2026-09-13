@@ -1,0 +1,13 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "BatteryLens" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "BatteryLens" } } } },
+    "Welcome to BatteryLens" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Welcome to BatteryLens" } } } },
+    "Low Battery" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Low Battery" } } } },
+    "Charging Complete" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging Complete" } } } },
+    "Settings…" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings…" } } } },
+    "Refresh" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh" } } } },
+    "Quit BatteryLens" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit BatteryLens" } } } }
+  },
+  "version" : "1.0"
+}

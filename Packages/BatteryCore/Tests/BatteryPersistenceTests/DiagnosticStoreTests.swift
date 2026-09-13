@@ -23,3 +23,29 @@ import Testing
     let events = try await store.load(now: now)
     #expect(events.map(\.code) == ["error"])
 }
+
+@Test func sqliteRepositoryRoundTripsDevicesAndRules() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let repository = try SQLiteDeviceRepository(url: directory.appendingPathComponent("BatteryLens.sqlite"))
+    let source = SourceKey(namespace: "test", identifier: "device")
+    let now = Date(timeIntervalSince1970: 100)
+    let device = BatteryDevice(
+        sourceKeys: [source],
+        displayName: "Keyboard",
+        category: .keyboard,
+        batteryLevel: 73,
+        powerState: .discharging,
+        originMacID: UUID(),
+        observedAt: now,
+        receivedAt: now,
+        preferredSource: source
+    )
+    let rule = AlertRule(deviceID: device.id, lowThreshold: 20, fullEnabled: true)
+
+    try await repository.save(devices: [device])
+    try await repository.save(alertRules: [rule])
+
+    #expect(try await repository.loadDevices() == [device])
+    #expect(try await repository.loadAlertRules() == [rule])
+}
